@@ -23,6 +23,7 @@ SET(CMAKE_C_FLAGS "-std=c99 -Wall -msse4.1 -mpclmul")
 find_library(GMP_LIB gmp)
 find_library(GMPXX_LIB gmpxx)
 find_library(MPFR_LIB mpfr)
+include_directories(/usr/local/include)
 
 add_definitions( -DMPFR_USE_NO_MACRO )
 add_subdirectory(flowcutter)
