@@ -5,7 +5,7 @@
 
 #include "utils.hpp"
 #include "graph.hpp"
-#include "../mpfr/mpreal.h"
+#include "../erd/Erd.hh"
 
 namespace sspp {
 struct Instance {
@@ -30,7 +30,9 @@ struct Instance {
 	vector<vector<Lit>> learned_clauses;
 
 	bool weighted = false;
-	mpfr::mpreal weight_factor = 1;
+        /* Start REB */
+	Erd weight_factor = 1;
+        /* End REB */
 
   vector<double> weights;
   vector<int> weight_read;

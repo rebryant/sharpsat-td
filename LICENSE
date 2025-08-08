@@ -1,3 +1,8 @@
+This code is modified from the original SharpSAT-TD.
+
+See the comments in the file src/erd/Erd.hh.  All other modifications are Copyright (c) 2025 Randal E. Bryant, with an MIT license.
+
+
 SharpSAT-TD is a modification of SharpSAT (MIT License, 2019 Marc Thurley).
 
 See licenses of other components in:

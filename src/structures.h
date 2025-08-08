@@ -3,6 +3,10 @@
  *
  *  Created on: Jun 25, 2012
  *      Author: Marc Thurley
+ *
+ *  Modified Aug 6, 2025 to support extended-range double
+ *      Author: Randal E. Bryant
+ *      Changes demarcated by comments containing "REB"
  */
 
 #ifndef STRUCTURES_H_
@@ -16,6 +20,11 @@
 #include "primitive_types.h"
 #include <gmpxx.h>
 #include "mpfr/mpreal.h"
+
+/* Start REB */
+#include "erd/Erd.hh"
+/* End REB */
+
 using namespace std;
 
 struct SDouble {
@@ -413,5 +422,74 @@ public:
   }
   static unsigned overheadInLits(){return sizeof(ClauseHeader)/sizeof(LiteralID);}
 };
+
+/* Start REB */
+struct SErd {
+ public:
+  SErd() {
+    val = Erd(0);
+    has = false;
+  }
+  void Init(double d) {
+    assert(d != 0);
+    val = Erd(d);
+    has = true;
+  }
+  SErd(const SErd& other) {
+    val = other.val;
+    has = other.has;
+  }
+  SErd& operator=(const SErd& other) {
+    val = other.val;
+    has = other.has;
+    return *this;
+  }
+  bool IsAlgZero() const {
+    return !has;
+  }
+  SErd operator*(SErd other) const {
+    SErd ret = other;
+    ret.val *= val;
+    ret.has &= has;
+    return ret;
+  }
+  SErd operator+(SErd other) const {
+    SErd ret = other;
+    ret.val += val;
+    ret.has |= has;
+    return ret;
+  }
+  SErd& operator*=(const SErd& other) {
+    val *= other.val;
+    has &= other.has;
+    return *this;
+  }
+  SErd& operator/=(const SErd& other) {
+    assert(other.val != 0);
+    assert(other.has);
+    val /= other.val;
+    return *this;
+  }
+  size_t InternalSize() const {
+    return 0;
+  }
+  Erd Get() const {
+    return val;
+  }
+  static SErd Zero() {
+    SErd ret;
+    return ret;
+  }
+  static SErd One() {
+    SErd ret;
+    ret.val = 1;
+    ret.has = true;
+    return ret;
+  }
+ private:
+  Erd val;
+  bool has = false;
+};
+/* End REB */
 
 #endif /* STRUCTURES_H_ */

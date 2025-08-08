@@ -1,6 +1,20 @@
 # SharpSAT-TD
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4880703.svg)](https://doi.org/10.5281/zenodo.4880703)
+This version has been modified to use extended-range double (ERD) for
+performing the computations in weighted model counting.  ERD
+supplements a standard IEEE double with a 64-bit exponent field,
+avoiding the overflow/underflow problems commonly encountered when
+using a double-precision floating-point representation in weighted
+model counting.
+
+ERD computation is enabled with the commandline option `-WX`
+
+Example weighted model counting with extended range:
+`cd bin`
+`./sharpSAT -WX -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003_micro.wcnf`
+
+
+# Original README
 
 Submission to model counting competition 2021 by Tuukka Korhonen and Matti Järvisalo (University of Helsinki).
 SharpSAT-TD is based on [SharpSAT](https://github.com/marcthurley/sharpSAT), with the main new features being the use of tree decompositions in decision heuristics, new preprocessor, and directly supporting weighted model counting.

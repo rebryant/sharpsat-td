@@ -20,6 +20,12 @@
 
 #include <random>
 
+/* 
+ * Modified August 6, 2025 to support extended-range floating point
+ * Randal E. Bryant
+ * Changed demarcated by comments containing "REB"
+*/
+
 using namespace std;
 
 
@@ -72,6 +78,16 @@ void PrintLog10(const mpfr::mpreal& num) {
   }
 }
 
+/* Start REB  */
+void PrintLog10(const Erd& num) {
+  if (num >= 0) {
+    cout<<"c s log10-estimate "<< num.log10() <<endl;
+  } else {
+    cout<<"c s neglog10-estimate "<< (-num).log10() <<endl;
+  }
+}
+/* End REB */
+
 void PrintExact(const mpz_class& num) {
   cout<<"c s exact arb int "<<num<<endl;
 }
@@ -83,6 +99,12 @@ void PrintExact(const mpfr::mpreal& num) {
 void PrintDouble(double num) {
   cout<<"c s exact double float "<<num<<endl;
 }
+
+/* Start REB */
+void PrintExact(const Erd& num) {
+  cout<<"c s exact extended-range float "<<num<<endl;
+}
+/* End REB */
 
 int main(int argc, char *argv[]) {
   cout<<std::setprecision(16);
@@ -109,6 +131,9 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "-WE") == 0) {
       assert(weighted == 0);
       weighted = 2;
+    } else if (strcmp(argv[i], "-WX") == 0) {
+      assert(weighted == 0);
+      weighted = 3;
     } else if (strcmp(argv[i], "-tmpdir") == 0) {
       if (argc <= i + 1) {
         cout << " wrong parameters" << endl;
@@ -209,7 +234,7 @@ int main(int argc, char *argv[]) {
     PrintLog10(ans);
     PrintExact(ans);
     return 0;
-  } else if (weighted == 1 || weighted == 2) {
+  } else if (weighted == 1 || weighted == 2 || weighted == 3) {
     sspp::Instance ins(input_file, true);
     if (weighted == 1) {
       cout<<"c o WARNING: Using doubles for weighted model counting, which can sometimes cause significant error. The flag -WE enabling weighted model counting with arbitrary precision is preferred."<<endl;
@@ -225,7 +250,9 @@ int main(int argc, char *argv[]) {
       PrintExact((mpfr::mpreal)0);
       return 0;
     }
-    mpfr::mpreal ans0 = ins.weight_factor;
+    /* Start REB */
+    Erd ans0 = ins.weight_factor;
+    /* End REB */
     cout<<"c o wf "<<ans0<<endl;
     if (ins.vars == 0) {
       PrintSat(true);
@@ -247,20 +274,38 @@ int main(int argc, char *argv[]) {
       cout<<"c o Solved in "<<glob_timer.get()<<" seconds."<<endl;
       PrintSat(true);
       PrintType(ins);
-      PrintLog10(ans1*(double)ans0);
-      PrintDouble(ans1*(double)ans0);
-    } else {
+      PrintLog10(ans1*ans0.get_double());
+      PrintDouble(ans1*ans0.get_double());
+    } else if (weighted == 2) {
       Solver<Smpr> theSolver(gen);
       theSolver.config() = config_;
       if (max_cache > 0) {
         theSolver.statistics().maximum_cache_size_bytes_ = max_cache;
       }
       mpfr::mpreal ans1 = theSolver.solve(ins, tdecomp).Get();
+      /* Start REB */
+      mpf_class mans0 = ans0.get_mpf();
+      mpfr::mpreal rans0(mans0.get_mpf_t());
+      /* End REB */
+      cout<<"c o Solved in "<<glob_timer.get()<<" seconds."<<endl;
+      PrintSat(true);
+      PrintType(ins);
+      PrintLog10(ans1*rans0);
+      PrintExact(ans1*rans0);
+    } else {
+/* Start REB */
+      Solver<SErd> theSolver(gen);
+      theSolver.config() = config_;
+      if (max_cache > 0) {
+        theSolver.statistics().maximum_cache_size_bytes_ = max_cache;
+      }
+      Erd ans1 = theSolver.solve(ins, tdecomp).Get();
       cout<<"c o Solved in "<<glob_timer.get()<<" seconds."<<endl;
       PrintSat(true);
       PrintType(ins);
       PrintLog10(ans1*ans0);
       PrintExact(ans1*ans0);
+/* End REB */	
     }
     return 0;
   } else {
