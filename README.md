@@ -10,6 +10,7 @@ model counting.
 ERD computation is enabled with the commandline option `-WX`
 
 Example weighted model counting with extended range:
+
 `cd bin`
 `./sharpSAT -WX -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003_micro.wcnf`
 
@@ -46,11 +47,13 @@ The currently supported input/output formats are those of [Model counting compet
 
 
 Example unweighted model counting:
+
 `cd bin`
 `./sharpSAT -decot 1 -decow 100 -tmpdir . -cs 3500 ../examples/track1_009.cnf`
 
 
 Example weighted model counting with arbitrary precision:
+
 `cd bin`
 `./sharpSAT -WE -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003.wcnf`
 
