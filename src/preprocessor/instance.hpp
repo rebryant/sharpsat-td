@@ -5,7 +5,7 @@
 
 #include "utils.hpp"
 #include "graph.hpp"
-#include "../erd/Erd.hh"
+#include "../erd/Erd.hpp"
 
 namespace sspp {
 struct Instance {

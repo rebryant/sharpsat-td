@@ -22,7 +22,7 @@
 #include "mpfr/mpreal.h"
 
 /* Start REB */
-#include "erd/Erd.hh"
+#include "erd/Erd.hpp"
 /* End REB */
 
 using namespace std;
