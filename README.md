@@ -13,7 +13,7 @@ Example weighted model counting with extended range:
 
 `cd bin`
 
-`./sharpSAT -WX -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003_micro.wcnf`
+`./sharpSAT -WX -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003_nano.wcnf`
 
 
 # Original README
