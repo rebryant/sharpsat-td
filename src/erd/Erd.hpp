@@ -21,22 +21,38 @@
   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
-========================================================================*/
+  ========================================================================*/
 
 #pragma once
 
+#include <stdio.h>
 #include <iostream>
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
+#include <ctype.h>
+#include <limits.h>
 #include <math.h>
+
+/* 
+   Optionally avoid any use of GMP libraries.
+   Set ERD_NO_GMP to 0 before including this file
+*/
+#ifndef ERD_NO_GMP
+#define ERD_NO_GMP 0
+#endif
+
+#if !ERD_NO_GMP
 #include <gmp.h>
 #include "gmpxx.h"
+#endif
+
 
 /*
   Representation of floating-point numbers based on double,
   but with additional exponent field to support extended range
- */
+*/
 typedef struct {
     double dbl; 
     int64_t exp; 
@@ -68,7 +84,7 @@ typedef struct {
 #endif
 
 /* Two ways of implementing normalization: standard and one that reduces need for conditional control */
-/*   Must be standardfor library */
+/*   Must not use library */
 #define ERD_NORM_STD 1
 
 /* Max number of times fractions can be multiplied without overflowing exponent */
@@ -87,8 +103,6 @@ typedef struct {
 #define DBL_EXP_MASK ((uint64_t) 0x7ff)
 #define DBL_BIAS ((int64_t) 0x3ff)
 
-#if ERD_LIBRARY
-
 static uint64_t dbl_get_bits(double x) {
     union {
 	double   d;
@@ -97,6 +111,8 @@ static uint64_t dbl_get_bits(double x) {
     u.d = x;
     return u.b;
 }
+
+#if ERD_LIBRARY
 
 /* Get exponent as unsigned integer */
 static uint64_t dbl_get_biased_exponent(double x) {
@@ -121,15 +137,6 @@ static bool dbl_exponent_above(int64_t exp) {
 }
 
 #else /* !ERD_LIBRARY */
-
-static uint64_t dbl_get_bits(double x) {
-    union {
-	double   d;
-	uint64_t b;
-    } u;
-    u.d = x;
-    return u.b;
-}
 
 static double dbl_from_bits(uint64_t bx) {
     union {
@@ -272,6 +279,7 @@ static erd_t erd_from_double(double dval) {
     return erd_normalize(nval);
 }
 
+#if !ERD_NO_GMP
 static erd_t erd_from_mpf(mpf_srcptr fval) {
     erd_t nval;
     long int exp;
@@ -295,6 +303,7 @@ static void erd_to_mpf(mpf_ptr dest, erd_t eval) {
     else if (eval.exp > 0)
 	mpf_mul_2exp(dest, dest, eval.exp);
 }
+#endif /* !ERD_NO_GMP */
 
 static double erd_to_double(erd_t eval) {
     if (erd_is_zero(eval))
@@ -314,6 +323,17 @@ static double erd_to_double(erd_t eval) {
     }
     return dbl_replace_exponent(eval.dbl, eval.exp);
 #endif
+}
+
+static unsigned erd_to_unsigned(erd_t a) {
+    if (a.dbl <= 0)
+	return 0U;
+    if (a.exp > 1000)
+	return UINT_MAX;
+    double d = erd_to_double(a);
+    if (d > UINT_MAX)
+	return UINT_MAX;
+    return (unsigned) d;
 }
 
 static bool erd_is_equal(erd_t a, erd_t b) {
@@ -482,20 +502,6 @@ static erd_t erd_sqrt(erd_t a) {
     return erd_normalize(nval);
 }
 
-/* Generate integral power of 10 */
-static long long p10(int exp) {
-    if (exp < 0)
-	return 0;
-    long long result = 1;
-    long long power = 10;
-    while (exp != 0) {
-	if (exp & 0x1)
-	    result *= power;
-	power *= power;
-	exp = exp >> 1;
-    }
-    return result;
-}
 
 /* Create right-justified string representation of nonnegative number */
 static void rj_string(char *sbuf, long long val, int len) {
@@ -510,6 +516,21 @@ static void rj_string(char *sbuf, long long val, int len) {
 	sbuf[i--] = '0' + (val % 10);
 	val = val / 10;
     }
+}
+
+/* Generate integral power of 10 */
+static long long p10(int exp) {
+    if (exp < 0)
+	return 0;
+    long long result = 1;
+    long long power = 10;
+    while (exp != 0) {
+	if (exp & 0x1)
+	    result *= power;
+	power *= power;
+	exp = exp >> 1;
+    }
+    return result;
 }
 
 /* Buf must point to buffer with at least ERD_BUF character capacity */
@@ -555,6 +576,11 @@ static void erd_string(erd_t a, char *buf, int nsig) {
 	snprintf(buf, ERD_BUF, "%s%lld.%se%lld", sgn, lfrac, sbuf, dec);
 }
 
+/*
+  ERD implementations of functions that are inferior to their implementations with GMP. 
+  They only get used in the C++ wrapper when ERD_NO_GMP is set to 1 
+*/
+
 /* Logarithms */
 static double erd_log2d(erd_t a) {
     if (a.dbl <= 0)
@@ -566,13 +592,113 @@ static erd_t erd_log2(erd_t a) {
     return erd_from_double(erd_log2d(a));
 }
 
-static double erd_log10d(erd_t a) {
-    return erd_log2d(a) * log10(2.0);
+static erd_t erd_log10(erd_t a) {
+    double d10 = log10(2.0);
+    return erd_mul(erd_log2(a),
+		   erd_from_double(d10));
 }
 
-static erd_t erd_log10(erd_t a) {
-    return erd_from_double(erd_log10d(a));
+/* Generate erd power of x */
+static erd_t xpe(double x, int64_t exp) {
+    if (x == 0)
+	return erd_zero();
+    if (exp < 0) {
+	exp = -exp;
+	x = 1.0/x;
+    }
+    erd_t power = erd_from_double(x);
+    erd_t result = erd_from_double(1.0);
+    while (exp != 0) {
+	if (exp & 0x1)
+	    result = erd_mul(result, power);
+	power = erd_mul(power, power);
+	exp = exp >> 1;
+    }
+    return result;
 }
+
+
+/* Generate erd power of 10 */
+static erd_t ep10(int64_t exp) {
+    return xpe(10.0, exp);
+}
+
+
+static int erd_sscanf(const char *s, erd_t *result) {
+    char buf[50];
+    erd_t nval = erd_zero();
+    int i = 0;
+    while (i < sizeof(buf) && *s != 0 && *s != 'e' && *s != 'E')
+	buf[i++] = *s++;
+    buf[i++] = 0;
+    bool ok = sscanf(buf, "%lf", &nval.dbl) > 0;
+    if (ok && *s != 0) {
+	long long lexp = 0;
+	ok = sscanf(s+1, "%lld", &lexp) > 0;
+	erd_t p10 = ep10(lexp);
+	nval = erd_mul(nval, p10);
+    }
+    if (ok) 
+	*result = erd_normalize(nval);
+    else
+	*result = erd_zero();
+    return (int) ok;
+}
+
+static int erd_fscanf(FILE *infile, erd_t *result) {
+    char buf[100];
+    int c;
+    while ((c = fgetc(infile)) != EOF && isspace(c))
+	;
+    int i = 0;
+    while ((c = fgetc(infile)) != EOF && i < sizeof(buf) &&
+	   !isspace(c) && (isdigit(c) || c == 'e' || c == 'E' || c == '.'))
+	buf[i++] = c;
+    buf[i] = 0;
+    return erd_sscanf((const char *) buf, result);
+}
+
+#if !ERD_NO_GMP
+static void mpf_string(char *buf, mpf_class &val, int nsig) {
+    char boffset = 0;
+    mp_exp_t ecount;
+    if (nsig <= 0)
+	nsig = 1;
+    if (nsig > 20)
+	nsig = 20;
+    char *sval = mpf_get_str(NULL, &ecount, 10, nsig, val.get_mpf_t());
+    if (!sval || strlen(sval) == 0 || sval[0] == '0') {
+	strcpy(buf, "0.0");
+    } else {
+	int voffset = 0;
+	bool neg = sval[0] == '-';
+	if (neg) {
+	    voffset++;
+	    buf[boffset++] = '-';
+	}
+	if (ecount == 0) {
+	    buf[boffset++] = '0';
+	    buf[boffset++] = '.';
+	} else {
+	    buf[boffset++] = sval[voffset++];
+	    buf[boffset++] = '.';
+	    ecount--;
+	}
+	if (sval[voffset] == 0)
+	    buf[boffset++] = '0';
+	else {
+	    while(sval[voffset] != 0)
+		buf[boffset++] = sval[voffset++];
+	}
+	if (ecount != 0) {
+	    buf[boffset++] = 'e';
+	    snprintf(&buf[boffset], 24, "%ld", (long) ecount);
+	} else
+	    buf[boffset] = 0;
+    }
+    free(sval);
+}
+#endif
 
 class Erd {
 private:
@@ -590,12 +716,16 @@ public:
 
     Erd(int i) { eval = erd_from_double((double) i); }
 
+#if !ERD_NO_GMP
     Erd(mpf_srcptr mval) { eval = erd_from_mpf(mval); }
+
+    void get_mpf(mpf_ptr dest) const { erd_to_mpf(dest, eval); }
+
+    mpf_class get_mpf() const { mpf_class val; erd_to_mpf(val.get_mpf_t(), eval); return val; }
+#endif
 
     bool is_zero() { return erd_is_zero(eval); }
 
-    void get_mpf(mpf_ptr dest) { return erd_to_mpf(dest, eval); }
-    mpf_class get_mpf() { mpf_class val; erd_to_mpf(val.get_mpf_t(), eval); return val; }
 
     double get_double() { return erd_to_double(eval); }
 
@@ -608,7 +738,9 @@ public:
     Erd log10() const { return erd_log10(eval); }
 
     Erd& operator=(const Erd &v) { eval = v.eval; return *this; }
+#if !ERD_NO_GMP
     Erd& operator=(const mpf_t v) { eval = erd_from_mpf(v); return *this; }
+#endif
     Erd& operator=(const double v) { eval = erd_from_double(v); return *this; }
     Erd& operator=(const unsigned long int v) { eval = erd_from_double((double) v); return *this; }
     Erd& operator=(const unsigned long long int v) { eval = erd_from_double((double) v); return *this; }
@@ -634,6 +766,15 @@ public:
     bool operator>(const Erd &other) const { return erd_cmp(eval, other.eval) > 0; }
     bool operator>=(const Erd &other) const { return erd_cmp(eval, other.eval) >= 0; }
 
+    explicit operator unsigned() const { return erd_to_unsigned(eval); }
+    explicit operator double() const { return erd_to_double(eval); }
+
+    friend Erd product_reduce_slow(Erd *data, int len) {
+	erd_t prod = erd_from_double(1.0);
+	for (int i = 0; i < len; i++)
+	    prod = erd_mul(prod, data[i].get_erd_t());
+	return Erd(prod);
+    }
 
     friend Erd product_reduce_x1(Erd *data, int len) {
 	erd_t prod = erd_from_double(1.0);
@@ -685,8 +826,13 @@ public:
 	    return product_reduce_x1(data, len);
     }
 
+    friend Erd product_reduce_slow(std::vector<Erd> data) { return product_reduce_slow(data.data(), (int) data.size()); }
+
+    friend Erd product_reduce_x1(std::vector<Erd> data) { return product_reduce_x1(data.data(), (int) data.size()); }
+
     friend Erd product_reduce(std::vector<Erd> data) { return product_reduce(data.data(), (int) data.size()); }
 
+#if ERD_NO_GMP
     friend std::ostream& operator<<(std::ostream& os, const Erd &a) {
 	char buf[ERD_BUF];
 	erd_string(a.eval, buf, ERD_NSIG);
@@ -694,6 +840,30 @@ public:
 	return os;
     }
 
+    friend std::istream& operator>>(std::istream& is, Erd &a) {
+	std::string s;
+	is >> s;
+	if (erd_sscanf(s.data(), &a.eval) == 0)
+	    is.setstate(std::ios::failbit);
+	return is;
+    }
+#else /* ERD_NO_GMP */
+    friend std::ostream& operator<<(std::ostream& os, const Erd &a) {
+	mpf_class ma(0.0, 64);
+	ma = a.get_mpf();
+	char buf[ERD_BUF];
+	mpf_string(buf, ma, ERD_NSIG);
+	return (os << buf);
+    }
 
+    friend std::istream& operator>>(std::istream& is, Erd &a) {
+	std::string s;
+	if (is >> s) {
+	    mpf_class ma(s, 64);
+	    a.get_erd_t() = erd_from_mpf(ma.get_mpf_t());
+	}
+	return is;
+    }
+#endif /* ERD_NO_GMP */
 };
 
