@@ -18,7 +18,7 @@ endif(STATIC)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -O3 -Wall -Wextra -Wshadow -g -Wfatal-errors -Wno-sign-compare -Wno-literal-suffix")
 
-SET(CMAKE_C_FLAGS "-std=c99 -Wall")
+SET(CMAKE_C_FLAGS "-std=c99 -mpclmul -Wall")
 
 find_library(GMP_LIB gmp)
 find_library(GMPXX_LIB gmpxx)

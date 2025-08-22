@@ -572,6 +572,8 @@ static void erd_string(erd_t a, char *buf, int nsig) {
     rj_string(sbuf, rfrac, nsig-1);
     if (dec == 0) 
 	snprintf(buf, ERD_BUF, "%s%lld.%s", sgn, lfrac, sbuf);
+    else if (dec > 0)
+	snprintf(buf, ERD_BUF, "%s%lld.%se+%lld", sgn, lfrac, sbuf, dec);
     else
 	snprintf(buf, ERD_BUF, "%s%lld.%se%lld", sgn, lfrac, sbuf, dec);
 }
@@ -692,6 +694,8 @@ static void mpf_string(char *buf, mpf_class &val, int nsig) {
 	}
 	if (ecount != 0) {
 	    buf[boffset++] = 'e';
+	    if (ecount > 0)
+		buf[boffset++] = '+';
 	    snprintf(&buf[boffset], 24, "%ld", (long) ecount);
 	} else
 	    buf[boffset] = 0;
@@ -724,10 +728,9 @@ public:
     mpf_class get_mpf() const { mpf_class val; erd_to_mpf(val.get_mpf_t(), eval); return val; }
 #endif
 
-    bool is_zero() { return erd_is_zero(eval); }
+    bool is_zero() const { return erd_is_zero(eval); }
 
-
-    double get_double() { return erd_to_double(eval); }
+    double get_double() const { return erd_to_double(eval); }
 
     Erd add(const Erd &other) const { return Erd(erd_add(eval, other.eval)); }
 
@@ -740,6 +743,7 @@ public:
     Erd& operator=(const Erd &v) { eval = v.eval; return *this; }
 #if !ERD_NO_GMP
     Erd& operator=(const mpf_t v) { eval = erd_from_mpf(v); return *this; }
+    Erd& operator=(const mpf_class &v) { eval = erd_from_mpf(v.get_mpf_t()); return *this; }
 #endif
     Erd& operator=(const double v) { eval = erd_from_double(v); return *this; }
     Erd& operator=(const unsigned long int v) { eval = erd_from_double((double) v); return *this; }
@@ -753,12 +757,12 @@ public:
     bool operator!=(const Erd &other) const { return !erd_is_equal(eval, other.eval); }
     Erd operator+(const Erd &other) const { return Erd(erd_add(eval, other.eval)); }
     Erd operator*(const Erd &other) const { return Erd(erd_mul(eval, other.eval)); }
-    Erd operator*(double &other) const { return Erd(erd_mul(eval, erd_from_double(other))); }
+    Erd operator*(const double &other) const { return Erd(erd_mul(eval, erd_from_double(other))); }
     Erd operator/(const Erd &other) const { return Erd(erd_div(eval, other.eval)); }
     Erd operator-() const { return Erd(erd_negate(eval)); }
     Erd operator-(const Erd &other) const { return Erd(erd_add(eval, erd_negate(other.eval))); }
     Erd& operator*=(const Erd &other) { eval = erd_mul(eval, other.eval); return *this; }
-    Erd& operator*=(double &other) { eval = erd_mul(eval, erd_from_double(other)); return *this; }
+    Erd& operator*=(const double &other) { eval = erd_mul(eval, erd_from_double(other)); return *this; }
     Erd& operator+=(const Erd &other) { eval = erd_add(eval, other.eval); return *this; }
     Erd& operator/=(const Erd &other) { eval = erd_div(eval, other.eval); return *this; }
     bool operator<(const Erd &other) const { return erd_cmp(eval, other.eval) < 0; }
@@ -782,11 +786,11 @@ public:
 	for (int i = 0; i < len; i++) {
 	    prod = erd_quick_mul(prod, data[i].get_erd_t());
 	    if (++rcount >= MAX_MUL) {
-		erd_normalize(prod);
+		prod = erd_normalize(prod);
 		rcount = 0;
 	    }
 	}
-	erd_normalize(prod);
+	prod = erd_normalize(prod);
 	return Erd(prod);
     }
 
@@ -826,11 +830,11 @@ public:
 	    return product_reduce_x1(data, len);
     }
 
-    friend Erd product_reduce_slow(std::vector<Erd> data) { return product_reduce_slow(data.data(), (int) data.size()); }
+    friend Erd product_reduce_slow(std::vector<Erd> &data) { return product_reduce_slow(data.data(), (int) data.size()); }
 
-    friend Erd product_reduce_x1(std::vector<Erd> data) { return product_reduce_x1(data.data(), (int) data.size()); }
+    friend Erd product_reduce_x1(std::vector<Erd> &data) { return product_reduce_x1(data.data(), (int) data.size()); }
 
-    friend Erd product_reduce(std::vector<Erd> data) { return product_reduce(data.data(), (int) data.size()); }
+    friend Erd product_reduce(std::vector<Erd> &data) { return product_reduce(data.data(), (int) data.size()); }
 
 #if ERD_NO_GMP
     friend std::ostream& operator<<(std::ostream& os, const Erd &a) {
@@ -849,8 +853,7 @@ public:
     }
 #else /* ERD_NO_GMP */
     friend std::ostream& operator<<(std::ostream& os, const Erd &a) {
-	mpf_class ma(0.0, 64);
-	ma = a.get_mpf();
+	mpf_class ma(a.get_mpf(), 64);
 	char buf[ERD_BUF];
 	mpf_string(buf, ma, ERD_NSIG);
 	return (os << buf);
@@ -860,7 +863,7 @@ public:
 	std::string s;
 	if (is >> s) {
 	    mpf_class ma(s, 64);
-	    a.get_erd_t() = erd_from_mpf(ma.get_mpf_t());
+	    a = ma;
 	}
 	return is;
     }
