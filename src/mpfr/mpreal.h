@@ -299,6 +299,7 @@ public:
     unsigned long long toULLong    (mp_rnd_t mode = GMP_RNDZ)    const;
     float              toFloat     (mp_rnd_t mode = GMP_RNDN)    const;
     double             toDouble    (mp_rnd_t mode = GMP_RNDN)    const;
+    double             toDouble_exp (long & exp, mp_rnd_t mode = GMP_RNDN)    const;
     long double        toLDouble   (mp_rnd_t mode = GMP_RNDN)    const;
 
 #if defined (MPREAL_HAVE_EXPLICIT_CONVERTERS)
@@ -1732,6 +1733,8 @@ inline long               mpreal::toLong   (mp_rnd_t mode)  const    {    return
 inline unsigned long      mpreal::toULong  (mp_rnd_t mode)  const    {    return  mpfr_get_ui (mpfr_srcptr(), mode);    }
 inline float              mpreal::toFloat  (mp_rnd_t mode)  const    {    return  mpfr_get_flt(mpfr_srcptr(), mode);    }
 inline double             mpreal::toDouble (mp_rnd_t mode)  const    {    return  mpfr_get_d  (mpfr_srcptr(), mode);    }
+inline double             mpreal::toDouble_exp (long &exp, mp_rnd_t mode)  const   
+{    return  mpfr_get_d_2exp  (&exp, mpfr_srcptr(), mode);    }
 inline long double        mpreal::toLDouble(mp_rnd_t mode)  const    {    return  mpfr_get_ld (mpfr_srcptr(), mode);    }
 inline long long          mpreal::toLLong  (mp_rnd_t mode)  const    {    return  mpfr_get_sj (mpfr_srcptr(), mode);    }
 inline unsigned long long mpreal::toULLong (mp_rnd_t mode)  const    {    return  mpfr_get_uj (mpfr_srcptr(), mode);    }

@@ -9,13 +9,13 @@
 
 #include <vector>
 #include <limits>
+#include <cmath>
 
 #include <string>
 
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <gmpxx.h>
-#include <limits>
 #include "mpfr/mpreal.h"
 
 #include <random>
@@ -93,7 +93,15 @@ void PrintExact(const mpz_class& num) {
 }
 
 void PrintExact(const mpfr::mpreal& num) {
-  cout<<"c s exact arb float "<<num<<endl;
+    // Use MPF 
+    mpf_t mnum;
+    mpf_init2(mnum, num.get_prec());
+    mpfr_get_f(mnum, num.mpfr_ptr(), MPFR_RNDN);
+    cout<<"c s exact arb float "<<num;
+    cout<<" MPF[";
+    mpf_out_str(stdout, 16, 0, mnum);
+    cout << "]" << endl;
+    mpf_clear(mnum);
 }
 
 void PrintDouble(double num) {
@@ -102,11 +110,17 @@ void PrintDouble(double num) {
 
 /* Start REB */
 void PrintExact(const EFP64& num) {
-  cout<<"c s exact extended-range float "<<num<<endl;
+  mpf_class mnum = num.get_mpf();
+
+  cout<<"c s exact extended-range float "<<num;;
+  cout << " MPF[";
+  mpf_out_str(stdout, 16, 0, mnum.get_mpf_t());
+  cout << "]" << endl;
 }
 /* End REB */
 
 int main(int argc, char *argv[]) {
+  int decimal_precision = 16;
   cout<<std::setprecision(16);
   sspp::Timer glob_timer;
   glob_timer.start();
@@ -186,6 +200,7 @@ int main(int argc, char *argv[]) {
       int prec = atoi(argv[++i]);
       assert(prec >= 1);
       cout<<std::setprecision(prec);
+      decimal_precision = prec;
     } else {
       input_file = argv[i];
     }
@@ -280,6 +295,10 @@ int main(int argc, char *argv[]) {
       PrintLog10(ans1*dans0);
       PrintDouble(ans1*dans0);
     } else if (weighted == 2) {
+      int bprec = (int) std::ceil(decimal_precision * std::log2(10.0));
+      // Round up to nearest multiple of 64
+      bprec = ((bprec + 64-1)/64) * 64;
+      mpfr_set_default_prec(bprec);
       Solver<Smpr> theSolver(gen);
       theSolver.config() = config_;
       if (max_cache > 0) {
@@ -287,8 +306,17 @@ int main(int argc, char *argv[]) {
       }
       mpfr::mpreal ans1 = theSolver.solve(ins, tdecomp).Get();
       /* Start REB */
-      mpf_class mans0 = ans0.get_mpf();
-      mpfr::mpreal rans0(mans0.get_mpf_t());
+      // Convert EFP64 to mpreal
+      double dans0;
+      int64_t eans0;
+      ans0.disperse(&dans0, &eans0);
+      mpfr::mpreal rans0(dans0);
+      if (eans0 > 0)
+	  rans0 <<= eans0;
+      else
+	  rans0 >>= -eans0;
+      //      mpf_class mans0 = ans0.get_mpf();
+      //      mpfr::mpreal rans0(mans0.get_mpf_t());
       /* End REB */
       cout<<"c o Solved in "<<glob_timer.get()<<" seconds."<<endl;
       PrintSat(true);
