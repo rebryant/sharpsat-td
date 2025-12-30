@@ -418,6 +418,14 @@ static efp64_t efp64_sqrt(efp64_t a) {
     return efp64_canonicalize(nval);
 }
 
+CUDA_ALL
+static efp64_t efp64_scale_power2(efp64_t val, int64_t power) {
+    efp64_t nval;
+    nval.fp = val.fp;
+    nval.exp = val.exp + power;
+    return nval;
+}
+
 /**** I/O Support.  Only needed when not using GMP *******/
 
 /* Create right-justified string representation of nonnegative number */

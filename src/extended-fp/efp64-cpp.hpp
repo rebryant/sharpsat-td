@@ -101,6 +101,8 @@ CUDA_ALL
 CUDA_ALL
     EFP64 log10() const { return efp64_log10(eval); }
 
+    //CUDA_ALL
+    //    EFP64& operator=(const EFP64 &v) { eval = v.eval; return *this; }
 #if !EFP64_NO_GMP
 CUDA_HOST
     EFP64& operator=(const mpf_t v) { eval = efp64_from_mpf(v); return *this; }
@@ -138,6 +140,10 @@ CUDA_ALL
 CUDA_ALL
     EFP64 operator-(const EFP64 &other) const { return EFP64(efp64_add(eval, efp64_negate(other.eval))); }
 CUDA_ALL
+    EFP64 operator<<(int64_t power) const { return EFP64(efp64_scale_power2(eval, power)); }
+CUDA_ALL
+    EFP64 operator>>(int64_t power) const { return EFP64(efp64_scale_power2(eval, -power)); }
+CUDA_ALL
     EFP64& operator*=(const EFP64 &other) { eval = efp64_mul(eval, other.eval); return *this; }
 CUDA_ALL
     EFP64& operator*=(const fp64_t &other) { eval = efp64_mul(eval, efp64_from_fp64(other)); return *this; }
@@ -145,6 +151,10 @@ CUDA_ALL
     EFP64& operator+=(const EFP64 &other) { eval = efp64_add(eval, other.eval); return *this; }
 CUDA_ALL
     EFP64& operator/=(const EFP64 &other) { eval = efp64_div(eval, other.eval); return *this; }
+CUDA_ALL
+    EFP64& operator<<=(int64_t power) { eval = efp64_scale_power2(eval, power); return *this; }
+CUDA_ALL
+    EFP64& operator>>=(int64_t power) { eval = efp64_scale_power2(eval, -power); return *this; }
 CUDA_ALL
     bool operator<(const EFP64 &other) const { return efp64_cmp(eval, other.eval) < 0; }
 CUDA_ALL
