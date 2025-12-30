@@ -5,7 +5,7 @@
 
 #include "utils.hpp"
 #include "graph.hpp"
-#include "../erd/Erd.hpp"
+#include "../extended-fp/efp64-cpp.hpp"
 
 namespace sspp {
 struct Instance {
@@ -31,7 +31,7 @@ struct Instance {
 
 	bool weighted = false;
         /* Start REB */
-	Erd weight_factor = 1;
+	EFP64 weight_factor = 1.0;
         /* End REB */
 
   vector<double> weights;

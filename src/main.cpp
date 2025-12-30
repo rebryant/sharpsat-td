@@ -79,7 +79,7 @@ void PrintLog10(const mpfr::mpreal& num) {
 }
 
 /* Start REB  */
-void PrintLog10(const Erd& num) {
+void PrintLog10(const EFP64& num) {
   if (num >= 0) {
     cout<<"c s log10-estimate "<< num.log10() <<endl;
   } else {
@@ -101,7 +101,7 @@ void PrintDouble(double num) {
 }
 
 /* Start REB */
-void PrintExact(const Erd& num) {
+void PrintExact(const EFP64& num) {
   cout<<"c s exact extended-range float "<<num<<endl;
 }
 /* End REB */
@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
     /* Start REB */
-    Erd ans0 = ins.weight_factor;
+    EFP64 ans0 = ins.weight_factor;
     /* End REB */
     cout<<"c o wf "<<ans0<<endl;
     if (ins.vars == 0) {
@@ -274,8 +274,9 @@ int main(int argc, char *argv[]) {
       cout<<"c o Solved in "<<glob_timer.get()<<" seconds."<<endl;
       PrintSat(true);
       PrintType(ins);
-      PrintLog10(ans1*ans0.get_double());
-      PrintDouble(ans1*ans0.get_double());
+      double dans0 = (double) ans0;
+      PrintLog10(ans1*dans0);
+      PrintDouble(ans1*dans0);
     } else if (weighted == 2) {
       Solver<Smpr> theSolver(gen);
       theSolver.config() = config_;
@@ -294,12 +295,12 @@ int main(int argc, char *argv[]) {
       PrintExact(ans1*rans0);
     } else {
 /* Start REB */
-      Solver<SErd> theSolver(gen);
+      Solver<SEFP64> theSolver(gen);
       theSolver.config() = config_;
       if (max_cache > 0) {
         theSolver.statistics().maximum_cache_size_bytes_ = max_cache;
       }
-      Erd ans1 = theSolver.solve(ins, tdecomp).Get();
+      EFP64 ans1 = theSolver.solve(ins, tdecomp).Get();
       cout<<"c o Solved in "<<glob_timer.get()<<" seconds."<<endl;
       PrintSat(true);
       PrintType(ins);

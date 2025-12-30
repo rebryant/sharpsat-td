@@ -22,7 +22,7 @@
 #include "mpfr/mpreal.h"
 
 /* Start REB */
-#include "erd/Erd.hpp"
+#include "extended-fp/efp64-cpp.hpp"
 /* End REB */
 
 using namespace std;
@@ -424,22 +424,22 @@ public:
 };
 
 /* Start REB */
-struct SErd {
+struct SEFP64 {
  public:
-  SErd() {
-    val = Erd(0);
+  SEFP64() {
+    val = EFP64(0);
     has = false;
   }
   void Init(double d) {
     assert(d != 0);
-    val = Erd(d);
+    val = EFP64(d);
     has = true;
   }
-  SErd(const SErd& other) {
+  SEFP64(const SEFP64& other) {
     val = other.val;
     has = other.has;
   }
-  SErd& operator=(const SErd& other) {
+  SEFP64& operator=(const SEFP64& other) {
     val = other.val;
     has = other.has;
     return *this;
@@ -447,24 +447,24 @@ struct SErd {
   bool IsAlgZero() const {
     return !has;
   }
-  SErd operator*(SErd other) const {
-    SErd ret = other;
+  SEFP64 operator*(SEFP64 other) const {
+    SEFP64 ret = other;
     ret.val *= val;
     ret.has &= has;
     return ret;
   }
-  SErd operator+(SErd other) const {
-    SErd ret = other;
+  SEFP64 operator+(SEFP64 other) const {
+    SEFP64 ret = other;
     ret.val += val;
     ret.has |= has;
     return ret;
   }
-  SErd& operator*=(const SErd& other) {
+  SEFP64& operator*=(const SEFP64& other) {
     val *= other.val;
     has &= other.has;
     return *this;
   }
-  SErd& operator/=(const SErd& other) {
+  SEFP64& operator/=(const SEFP64& other) {
     assert(other.val != 0);
     assert(other.has);
     val /= other.val;
@@ -473,21 +473,21 @@ struct SErd {
   size_t InternalSize() const {
     return 0;
   }
-  Erd Get() const {
+  EFP64 Get() const {
     return val;
   }
-  static SErd Zero() {
-    SErd ret;
+  static SEFP64 Zero() {
+    SEFP64 ret;
     return ret;
   }
-  static SErd One() {
-    SErd ret;
+  static SEFP64 One() {
+    SEFP64 ret;
     ret.val = 1;
     ret.has = true;
     return ret;
   }
  private:
-  Erd val;
+  EFP64 val;
   bool has = false;
 };
 /* End REB */
