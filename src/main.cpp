@@ -251,7 +251,9 @@ int main(int argc, char *argv[]) {
       return 0;
     }
     /* Start REB */
+    // Originally:  mpfr::mpreal ans0 = ins.weight_factor;
     EFP64 ans0 = ins.weight_factor;
+    
     /* End REB */
     cout<<"c o wf "<<ans0<<endl;
     if (ins.vars == 0) {
