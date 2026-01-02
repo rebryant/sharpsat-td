@@ -106,10 +106,15 @@ void PrintExact(const mpfr::mpreal& num) {
 
 void PrintDouble(double num) {
     cout<<"c s exact double float "<<num;
-    mpf_class mnum(num);
-    gmp_printf(" MPF_HEX[%Fa] ", mnum.get_mpf_t());
+    if (std::isinf(num))
+	printf(" MPF_HEX[%sINF] ", num < 0 ? "-" : "");
+    else if (std::isnan(num))
+	printf(" MPF_HEX[NAN] ");
+    else {
+	mpf_class mnum(num);
+	gmp_printf(" MPF_HEX[%Fa] ", mnum.get_mpf_t());
+    }
     cout  << endl;
-
 }
 
 /* Start REB */
