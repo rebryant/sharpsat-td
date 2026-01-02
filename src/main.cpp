@@ -105,17 +105,19 @@ void PrintExact(const mpfr::mpreal& num) {
 }
 
 void PrintDouble(double num) {
-  cout<<"c s exact double float "<<num<<endl;
+    cout<<"c s exact double float "<<num;
+    mpf_class mnum(num);
+    gmp_printf(" MPF_HEX[%Fa] ", mnum.get_mpf_t());
+    cout  << endl;
+
 }
 
 /* Start REB */
 void PrintExact(const EFP64& num) {
   mpf_class mnum = num.get_mpf();
-
-  cout<<"c s exact extended-range float "<<num;;
-  cout << " MPF[";
-  mpf_out_str(stdout, 16, 0, mnum.get_mpf_t());
-  cout << "]" << endl;
+  cout<<"c s exact extended-range float " << num ;
+  gmp_printf(" MPF_HEX[%Fa] ", mnum.get_mpf_t());
+  cout  << endl;
 }
 /* End REB */
 
