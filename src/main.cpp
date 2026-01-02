@@ -93,15 +93,15 @@ void PrintExact(const mpz_class& num) {
 }
 
 void PrintExact(const mpfr::mpreal& num) {
-    // Use MPF 
+    cout<<"c s exact arb float " << num;
+
     mpf_t mnum;
     mpf_init2(mnum, num.get_prec());
     mpfr_get_f(mnum, num.mpfr_ptr(), MPFR_RNDN);
-    cout<<"c s exact arb float "<<num;
-    cout<<" MPF[";
-    mpf_out_str(stdout, 16, 0, mnum);
-    cout << "]" << endl;
+    gmp_printf(" MPF_HEX[%Fa] ", mnum);
     mpf_clear(mnum);
+
+    cout << endl;
 }
 
 void PrintDouble(double num) {
@@ -120,8 +120,8 @@ void PrintExact(const EFP64& num) {
 /* End REB */
 
 int main(int argc, char *argv[]) {
-  int decimal_precision = 16;
-  cout<<std::setprecision(16);
+  int decimal_precision = 15;
+  cout<<std::setprecision(decimal_precision);
   sspp::Timer glob_timer;
   glob_timer.start();
   string input_file;
