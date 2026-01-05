@@ -57,7 +57,9 @@ TreeDecomposition Treedecomp(const Graph& graph, double time, string tmp_dir) {
 	out << std::flush;
 	out.close();
 	cout<<"c o Primal edges "<<es.size()<<endl;
-	string tw_binary = "./flow_cutter_pace17";
+	//	string tw_binary = "./flow_cutter_pace17";
+	// REB: Replace with global reference
+	string tw_binary = "flow_cutter_pace17";
 	string cmd = "timeout " + to_string(time) + "s " + tw_binary + " <" + tmp1 + " >" + tmp2 + " 2>/dev/null";
 	cout << "c o CMD: " << cmd << endl;
 	int status = system(cmd.c_str());

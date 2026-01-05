@@ -93,26 +93,25 @@ void PrintExact(const mpz_class& num) {
 }
 
 void PrintExact(const mpfr::mpreal& num) {
-    cout<<"c s exact arb float " << num;
+    cout<<"c s exact arb float " << num << endl;
 
     mpf_t mnum;
     mpf_init2(mnum, num.get_prec());
     mpfr_get_f(mnum, num.mpfr_ptr(), MPFR_RNDN);
-    gmp_printf(" MPF_HEX[%Fa] ", mnum);
+    gmp_printf("c _MPF_(%u)[%.Fg]\n", (unsigned) num.get_prec(), mnum);
     mpf_clear(mnum);
-
     cout << endl;
 }
 
 void PrintDouble(double num) {
-    cout<<"c s exact double float "<<num;
+    cout<<"c s exact double float "<<num << endl;
     if (std::isinf(num))
-	printf(" MPF_HEX[%sINF] ", num < 0 ? "-" : "");
+	printf("c _MPF_(53)[%sINF] ", num < 0 ? "-" : "");
     else if (std::isnan(num))
-	printf(" MPF_HEX[NAN] ");
+	printf("c _MPF_(53)[NAN] ");
     else {
 	mpf_class mnum(num);
-	gmp_printf(" MPF_HEX[%Fa] ", mnum.get_mpf_t());
+	gmp_printf("c _MPF_(53)[%.Fg]\n", mnum);
     }
     cout  << endl;
 }
@@ -120,8 +119,8 @@ void PrintDouble(double num) {
 /* Start REB */
 void PrintExact(const EFP64& num) {
   mpf_class mnum = num.get_mpf();
-  cout<<"c s exact extended-range float " << num ;
-  gmp_printf(" MPF_HEX[%Fa] ", mnum.get_mpf_t());
+  cout<<"c s exact extended-range float " << num << endl;
+  gmp_printf("c _MPF_(%u)[%.Fg]\n", (unsigned) mnum.get_prec(), mnum);
   cout  << endl;
 }
 /* End REB */

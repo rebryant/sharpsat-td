@@ -1,20 +1,23 @@
 # SharpSAT-TD
 
-This version has been modified to use extended-range double (ERD) for
-performing the computations in weighted model counting.  ERD
+This version has been modified to use extended-range double (EFP64) for
+performing the computations in weighted model counting.  EFP64
 supplements a standard IEEE double with a 64-bit exponent field,
 avoiding the overflow/underflow problems commonly encountered when
 using a double-precision floating-point representation in weighted
 model counting.
 
-ERD computation is enabled with the commandline option `-WX`
+EFP64 computation is enabled with the commandline option `-WX`
 
-Example weighted model counting with extended range:
+Examples of weighted model counting with extended range:
 
 `cd bin`
 
 `./sharpSAT -WX -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003_nano.wcnf`
+`./sharpSAT -WX -decot 1 -decow 100 -tmpdir . -cs 3500 -prec 20 ../examples/track2_003_giga.wcnf`
 
+NOTE: This version requires flow_cutter_pace17 to be part of the PATH.
+It can be symbolically linked to ./bin/flow_cutter_pace17
 
 # Original README
 

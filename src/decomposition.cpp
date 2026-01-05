@@ -165,7 +165,10 @@ pair<int, vector<int>> Treewidth(const Graph& graph, double time) {
 		}
 	}
 	out.close();
-	string tw_binary = "../../../flow-cutter-pace17/flow_cutter_pace17";
+
+	//	string tw_binary = "../../../flow-cutter-pace17/flow_cutter_pace17";
+	// REB: Use global reference
+	string tw_binary = "flow_cutter_pace17";
 	string cmd = "timeout " + to_string(time) + "s " + tw_binary + " <" + tmp1 + " >" + tmp2 + " 2>/dev/null";
 	cout << "CMD:" << endl;
 	cout << cmd << endl;
